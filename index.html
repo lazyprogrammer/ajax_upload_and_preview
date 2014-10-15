@@ -1,0 +1,72 @@
+<html>
+<head>
+  <script src="http://code.jquery.com/jquery-2.1.1.min.js" type="text/javascript"></script>
+  <script>
+    var IMGUR_CLIENT_ID = "<YOUR CLIENT ID HERE>";
+
+    function uploadImage() {
+      document.getElementById('upload').click();
+      document.getElementById('upload').onchange = function() {
+        alert(document.getElementById('upload').files[0].name);
+
+        var f = document.getElementById('upload').files[0];
+        var fr = new FileReader();
+        try {
+          fr.readAsBinaryString(f);
+        } catch(e) {
+          alert(e.message);
+          return;
+        }
+
+        fr.onerror = function() {
+          alert('There was an error reading the file');
+        }
+        fr.onload = function() {
+          var b64data = window.btoa(fr.result);
+          ajaxReq.open("POST", "https://api.imgur.com/3/image.json", true);
+          ajaxReq.setRequestHeader("Authorization","Client-ID " + IMGUR_CLIENT_ID);
+
+          var data = new FormData();
+          data.append('title', 'random title');
+          data.append('image', b64data);
+          ajaxReq.send(data);
+        }
+      }
+    }
+
+    try{
+      // Opera 8.0+, Firefox, Safari
+      ajaxReq = new XMLHttpRequest();
+    } catch (e){
+      // Internet Explorer Browsers
+      try{
+        ajaxReq = new ActiveXObject("Msxml2.XMLHTTP");
+      } catch (e) {
+        try{
+          ajaxReq = new ActiveXObject("Microsoft.XMLHTTP");
+        } catch (e){
+          // Something went wrong
+          alert("Your browser broke!");
+        }
+      }
+    }
+
+    $(document).ready(function() {
+      ajaxReq.onreadystatechange=function() {
+        if (ajaxReq.readyState==4 && ajaxReq.status==200) {
+          var resp = jQuery.parseJSON(ajaxReq.responseText);
+          if (resp.success == true && resp.status == 200) {
+            alert(resp.data.link);
+            document.getElementById('preview').innerHTML = "<img src='" + resp.data.link + "' />";
+          }
+        }
+      };
+    });
+  </script>
+</head>
+<body>
+  <div id='preview'></div>
+  <input type="file" id="upload" name="upload" style="visibility: hidden; width: 1px; height: 1px" />
+  <button onclick='uploadImage();'>Click me to upload and preview an image!</button>
+</body>
+</html>
